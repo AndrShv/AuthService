@@ -6,6 +6,7 @@ import org.example.DTO.LoginRequest;
 import org.example.DTO.RegisterRequest;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -54,4 +56,10 @@ public class AuthService {
 
         return user;
     }
+
+    public User getUserByIdentifier(String identifier) {
+        return userRepository.findByUsernameOrEmail(identifier, identifier)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
 }
