@@ -19,6 +19,9 @@ public class MessageSending {
     private RabbitTemplate rabbitTemplate;
 
     public void sendUserRegisteredEvent(UserRegisteredEvent event) {
+        System.out.println(event.getId());
+        System.out.println(event.getEmail());
+        System.out.println(event.getUsername());
         rabbitTemplate.convertAndSend(queueName, event);
     }
 

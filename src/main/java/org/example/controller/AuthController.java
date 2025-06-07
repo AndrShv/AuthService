@@ -48,6 +48,7 @@ public class AuthController {
         User user = authService.getUserByIdentifier(loginRequest.identifier());
 
         UserRegisteredEvent event = new UserRegisteredEvent(
+                user.getId(),
                 user.getUsername(),
                 user.getEmail()
         );
