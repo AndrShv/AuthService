@@ -9,6 +9,7 @@ import org.example.DTO.RegisterRequest;
 import org.example.entity.User;
 import org.example.event.UserRegisteredEvent;
 import org.example.service.AuthService;
+import org.example.service.JwtService;
 import org.example.service.MessageSending;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final org.example.util.JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final MessageSending messageSending;
+    private final JwtService jwtService;
 
 
 
@@ -42,10 +43,8 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(loginRequest.identifier(), loginRequest.password())
         );
 
-        String token = jwtUtil.generateToken(loginRequest.identifier());
-
-
         User user = authService.getUserByIdentifier(loginRequest.identifier());
+        String token = jwtService.generateToken(user);
 
         UserRegisteredEvent event = new UserRegisteredEvent(
                 user.getId(),

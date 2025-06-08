@@ -13,26 +13,17 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private Key key;
-
     @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.expirationMs}")
     private long expirationMs;
 
+    private Key key;
+
     @PostConstruct
     public void init() {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
     }
 
     public String extractUsername(String token) {
@@ -41,8 +32,8 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            parseToken(token);
-            return true;
+            Jws<Claims> claims = parseToken(token);
+            return !claims.getBody().getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
