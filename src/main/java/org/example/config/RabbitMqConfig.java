@@ -1,9 +1,7 @@
 package org.example.config;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.core.Queue;
+
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -13,9 +11,6 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Controller;
-@Getter
-@Setter
 @Configuration
 public class RabbitMqConfig  {
 
@@ -42,13 +37,6 @@ public class RabbitMqConfig  {
     }
 
     @Bean
-    public Queue queue(RabbitAdmin rabbitAdmin) {
-        Queue queue = new Queue(queueName, false);
-        rabbitAdmin.declareQueue(queue);
-        return queue;
-    }
-
-    @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -60,6 +48,36 @@ public class RabbitMqConfig  {
         return rabbitTemplate;
     }
 
+    // --- Exchanges ---
+    @Bean
+    public TopicExchange userExchange() {
+        return new TopicExchange("user.exchange");
+    }
 
+    @Bean
+    public TopicExchange videoExchange() {
+        return new TopicExchange("video.exchange");
+    }
+
+    // --- Queues ---
+    @Bean
+    public Queue userQueue() {
+        return new Queue("user.registered.queue", true);
+    }
+
+    @Bean
+    public Queue videoQueue() {
+        return new Queue("video.create.queue", true);
+    }
+
+    // --- Bindings ---
+    @Bean
+    public Binding userBinding(Queue userQueue, TopicExchange userExchange) {
+        return BindingBuilder.bind(userQueue).to(userExchange).with("user.registered");
+    }
+
+    @Bean
+    public Binding videoBinding(Queue videoQueue, TopicExchange videoExchange) {
+        return BindingBuilder.bind(videoQueue).to(videoExchange).with("video.create");
+    }
 }
-
