@@ -58,6 +58,10 @@ public class RabbitMqConfig  {
     public TopicExchange videoExchange() {
         return new TopicExchange("video.exchange");
     }
+    @Bean
+    public TopicExchange userProfileExchange() {
+        return new TopicExchange("user.profile.exchange");
+    }
 
     // --- Queues ---
     @Bean
@@ -70,6 +74,11 @@ public class RabbitMqConfig  {
         return new Queue("video.create.queue", true);
     }
 
+    @Bean
+    public Queue userProfileQueue() {
+        return new Queue("user.profile.queue", true);
+    }
+
     // --- Bindings ---
     @Bean
     public Binding userBinding(Queue userQueue, TopicExchange userExchange) {
@@ -79,5 +88,9 @@ public class RabbitMqConfig  {
     @Bean
     public Binding videoBinding(Queue videoQueue, TopicExchange videoExchange) {
         return BindingBuilder.bind(videoQueue).to(videoExchange).with("video.create");
+    }
+    @Bean
+    public Binding userProfileBinding(Queue userProfileQueue, TopicExchange userProfileExchange) {
+        return BindingBuilder.bind(userProfileQueue).to(userProfileExchange).with("user.profile.create");
     }
 }

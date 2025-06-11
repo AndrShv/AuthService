@@ -70,7 +70,7 @@ public class AuthService {
 
         rabbitTemplate.convertAndSend("user.exchange", "user.registered", userEvent);
         rabbitTemplate.convertAndSend("video.exchange", "video.create", videoEvent);
-        messageSending.sendUserRegisteredEvent(event);
+
     }
 
     public User login(LoginRequest request) {
