@@ -2,25 +2,28 @@ package org.example.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256); // або використайте більш надійний спосіб зберігання ключа
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private final long expirationMs = 3600000; // 1 година
+    @Value("${jwt.expirationMs}")
+    private long expirationMs;
 
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(key)
-                .compact();
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String extractUsername(String token) {
@@ -29,8 +32,8 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            parseToken(token);
-            return true;
+            Jws<Claims> claims = parseToken(token);
+            return !claims.getBody().getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
