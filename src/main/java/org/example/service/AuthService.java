@@ -21,7 +21,6 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MessageSending messageSending;
     private final RabbitTemplate rabbitTemplate;
 
 
@@ -52,7 +51,6 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.password()));
 
         user = userRepository.save(user);
-        userRepository.save(user);
         UUID userId = user.getId();
 
         UserRegisteredEvent event = new UserRegisteredEvent(
@@ -68,7 +66,9 @@ public class AuthService {
                 "Welcome to My Channel!",
                 "https://example.com/welcome.mp4");
 
+        System.out.println("Отправка userEvent: " + userEvent);
         rabbitTemplate.convertAndSend("user.exchange", "user.registered", userEvent);
+        System.out.println("Отправка videoEvent: " + videoEvent);
         rabbitTemplate.convertAndSend("video.exchange", "video.create", videoEvent);
 
     }

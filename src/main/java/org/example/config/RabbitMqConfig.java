@@ -36,18 +36,18 @@ public class RabbitMqConfig  {
         return new RabbitAdmin(connectionFactory);
     }
 
+
     @Bean
-    public MessageConverter jsonMessageConverter() {
+    public Jackson2JsonMessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
     @Bean
-    public AmqpTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(jsonMessageConverter());
-        return rabbitTemplate;
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jsonMessageConverter());
+        return template;
     }
-
     // --- Exchanges ---
     @Bean
     public TopicExchange userExchange() {
@@ -62,6 +62,16 @@ public class RabbitMqConfig  {
     public TopicExchange userProfileExchange() {
         return new TopicExchange("user.profile.exchange");
     }
+    @Bean
+    public TopicExchange reactionsExchange() {
+        return new TopicExchange("reactions.exchange");
+    }
+    @Bean
+    public DirectExchange commentExchange() {
+        return new DirectExchange("comment.exchange");
+    }
+
+
 
     // --- Queues ---
     @Bean
@@ -78,6 +88,14 @@ public class RabbitMqConfig  {
     public Queue userProfileQueue() {
         return new Queue("user.profile.queue", true);
     }
+    @Bean
+    public Queue reactionsQueue() {
+        return new Queue("reactions.queue", true);
+    }
+    @Bean
+    public Queue commentQueue() {
+        return new Queue("comment.queue", true);
+    }
 
     // --- Bindings ---
     @Bean
@@ -92,5 +110,13 @@ public class RabbitMqConfig  {
     @Bean
     public Binding userProfileBinding(Queue userProfileQueue, TopicExchange userProfileExchange) {
         return BindingBuilder.bind(userProfileQueue).to(userProfileExchange).with("user.profile.create");
+    }
+    @Bean
+    public Binding reactionsBinding(Queue reactionsQueue, TopicExchange reactionsExchange) {
+        return BindingBuilder.bind(reactionsQueue).to(reactionsExchange).with("reactions.create");
+    }
+    @Bean
+    public Binding commentBinding(Queue commentQueue, DirectExchange commentExchange) {
+        return BindingBuilder.bind(commentQueue).to(commentExchange).with("comment.create");
     }
 }
