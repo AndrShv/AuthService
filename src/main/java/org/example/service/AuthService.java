@@ -5,9 +5,15 @@ import lombok.RequiredArgsConstructor;
 import org.example.DTO.LoginRequest;
 import org.example.DTO.RegisterRequest;
 import org.example.entity.User;
+import org.example.event.UserRegisteredEvent;
+import org.example.event.VideoCreatingEvent;
 import org.example.repository.UserRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +21,9 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RabbitTemplate rabbitTemplate;
+
+
 
     @Transactional
     public void register(RegisterRequest request) {
@@ -29,18 +38,39 @@ public class AuthService {
         if (userRepository.existsByPhone(request.phone())) {
             throw new IllegalArgumentException("Phone already registered");
         }
+
         if (userRepository.existsByUsername(request.username())) {
             throw new IllegalArgumentException("Username already registered");
         }
 
-
         User user = new User();
+        user.setId(UUID.randomUUID());
         user.setEmail(request.email());
         user.setUsername(request.username());
         user.setPhone(request.phone());
         user.setPassword(passwordEncoder.encode(request.password()));
 
-        userRepository.save(user);
+        user = userRepository.save(user);
+        UUID userId = user.getId();
+
+        UserRegisteredEvent event = new UserRegisteredEvent(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail()
+
+        );
+
+        UserRegisteredEvent userEvent = new UserRegisteredEvent(userId, user.getUsername(), user.getEmail());
+        VideoCreatingEvent videoEvent = new VideoCreatingEvent(userId,
+                "Welcome to My Channel",
+                "Welcome to My Channel!",
+                "https://example.com/welcome.mp4");
+
+        System.out.println("Отправка userEvent: " + userEvent);
+        rabbitTemplate.convertAndSend("user.exchange", "user.registered", userEvent);
+        System.out.println("Отправка videoEvent: " + videoEvent);
+        rabbitTemplate.convertAndSend("video.exchange", "video.create", videoEvent);
+
     }
 
     public User login(LoginRequest request) {
@@ -54,4 +84,10 @@ public class AuthService {
 
         return user;
     }
+
+    public User getUserByIdentifier(String identifier) {
+        return userRepository.findByUsernameOrEmail(identifier, identifier)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
 }
